@@ -272,7 +272,7 @@ function LODMarker({ targetRef, radius, planetName, color, onSelectObject, isMoo
 
 // Pure-WebGL fading label — uses drei Text (troika GPU rendering) with no DOM.
 // Quaternion-copied from camera for billboard behaviour; scales to constant screen size.
-export function FadingLabel({ targetRef, radius, name, position, fontSize }) {
+export function FadingLabel({ targetRef, radius, name, position, fontSize, hovered }) {
   const textRef = useRef();
   const groupRef = useRef();
 
@@ -298,8 +298,6 @@ export function FadingLabel({ targetRef, radius, name, position, fontSize }) {
     groupRef.current.scale.setScalar(worldH / 0.1);
 
     // Correct billboard math: compute local_quat = inverse(parent_world_quat) × camera_quat
-    // This cancels out any rotation introduced by parent groups (planet spin, moon orbit, Sun rotation)
-    // so the label stays perfectly upright and facing the viewer in world space.
     if (groupRef.current.parent) {
       groupRef.current.parent.getWorldQuaternion(_parentQuat);
       _parentQuat.invert();
@@ -314,12 +312,15 @@ export function FadingLabel({ targetRef, radius, name, position, fontSize }) {
       <Text
         ref={textRef}
         fontSize={0.1}
-        color="white"
+        color={hovered ? 'white' : 'white'}
         anchorX="center"
         anchorY="bottom"
         letterSpacing={0.08}
         material-transparent
         material-depthWrite={false}
+        outlineWidth={hovered ? 0.012 : 0}
+        outlineColor={hovered ? '#88ccff' : 'transparent'}
+        outlineOpacity={hovered ? 0.85 : 0}
       >
         {name.toUpperCase()}
       </Text>
@@ -327,8 +328,9 @@ export function FadingLabel({ targetRef, radius, name, position, fontSize }) {
   );
 }
 
-function Satellite({ data, isPlanetSelected, globalSelected, onSelectObject }) {
+function Satellite({ data, planetId, isPlanetSelected, globalSelected, onSelectObject }) {
   const ref = useRef();
+  const orbitCenterRef = useRef();
   const meshRef = useRef();
   const angle = useRef(Math.random() * Math.PI * 2);
   const moonTexture = useImperativeTexture('/textures/moon.jpg', '#999999');
@@ -339,24 +341,46 @@ function Satellite({ data, isPlanetSelected, globalSelected, onSelectObject }) {
   const moonOrbitSpeed = ORBIT_SPEED[moonKey] || (2 * Math.PI / (27.3 * 86400));
 
   useFrame((state, delta) => {
-    if (ref.current) {
-      // Pure-function orbit: angle is deterministic from simTime — never drifts
-      const moonAngle = simClock.simTime * moonOrbitSpeed + (data.initialAngle || 0);
-      ref.current.position.x = Math.cos(moonAngle) * data.distance;
-      ref.current.position.z = Math.sin(moonAngle) * data.distance;
-      // Tidal locking: moon always faces its parent planet
-      ref.current.rotation.y = -moonAngle + Math.PI / 2;
-
-      // Cache world position and scale for camera targeting
-      if (!PLANET_DATA[moonKey]) PLANET_DATA[moonKey] = { offset: [0, data.size * 2, data.size * 6], scale: [data.size, data.size, data.size] };
-      if (ref.current.parent?.parent) {
-        const pp = ref.current.parent.parent.position;
-        PLANET_DATA[moonKey].pos = [pp.x + ref.current.position.x, pp.y, pp.z + ref.current.position.z];
-        if (sharedPlanetPositions[moonKey]) {
-          sharedPlanetPositions[moonKey].set(pp.x + ref.current.position.x, pp.y, pp.z + ref.current.position.z);
-        }
-      }
+    if (!ref.current) return;
+    
+    // Absolute world-space origin of the host planet
+    const parentData = PLANET_DATA[planetId];
+    if (!parentData || !parentData.pos) return;
+    
+    const px = parentData.pos[0];
+    const py = parentData.pos[1];
+    const pz = parentData.pos[2];
+    
+    if (orbitCenterRef.current) {
+       orbitCenterRef.current.position.set(px, py, pz);
     }
+    
+    // Pure-function orbit: angle is deterministic from simTime — never drifts
+    const moonAngle = simClock.simTime * moonOrbitSpeed + (data.initialAngle || 0);
+    
+    const targetX = px + Math.cos(moonAngle) * data.distance;
+    const targetZ = pz + Math.sin(moonAngle) * data.distance;
+    
+    const targetPos = new THREE.Vector3(targetX, py, targetZ);
+    
+    // Anti-Jitter Fix: Smooth interpolation to mask Float32 precision noise at 50,000+ units
+    if (ref.current.position.distanceToSquared(targetPos) > 10.0) {
+      ref.current.position.copy(targetPos); // Initial snap
+    } else {
+      ref.current.position.lerp(targetPos, 0.15); // Smooth damping mask
+    }
+
+    // Tidal locking: moon always faces its parent planet
+    ref.current.rotation.y = -moonAngle + Math.PI / 2;
+
+    // Cache world position and scale for camera targeting
+    if (!PLANET_DATA[moonKey]) PLANET_DATA[moonKey] = { offset: [0, data.size * 2, data.size * 6], scale: [data.size, data.size, data.size] };
+    PLANET_DATA[moonKey].pos = [ref.current.position.x, ref.current.position.y, ref.current.position.z];
+    
+    if (sharedPlanetPositions[moonKey]) {
+      sharedPlanetPositions[moonKey].copy(ref.current.position);
+    }
+
     if (meshRef.current) {
       const targetS = hovered ? 1.05 : 1.0;
       meshRef.current.scale.lerp(new THREE.Vector3(targetS, targetS, targetS), 1.0 - Math.exp(-8.0 * delta));
@@ -379,29 +403,32 @@ function Satellite({ data, isPlanetSelected, globalSelected, onSelectObject }) {
   }, [data.distance]);
 
   return (
-    <group>
-      {/* Invisible hit-box ring so users can still click the orbit path easily */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]}
-        visible={isPlanetSelected || globalSelected === data.name.toLowerCase()}
-        onClick={(e) => { e.stopPropagation(); onSelectObject(data.name.toLowerCase()); }}
-        onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer'; }}
-        onPointerOut={() => { document.body.style.cursor = 'auto'; }}
-      >
-        <ringGeometry args={[data.distance - 0.5, data.distance + 0.5, 32]} />
-        <meshBasicMaterial visible={false} />
-      </mesh>
+    <>
+      <group ref={orbitCenterRef}>
+        {/* Invisible hit-box ring so users can still click the orbit path easily */}
+        <mesh rotation={[-Math.PI / 2, 0, 0]}
+          visible={isPlanetSelected || globalSelected === data.name.toLowerCase()}
+          onClick={(e) => { e.stopPropagation(); onSelectObject(data.name.toLowerCase()); }}
+          onPointerOver={(e) => { e.stopPropagation(); document.body.style.cursor = 'pointer'; }}
+          onPointerOut={() => { document.body.style.cursor = 'auto'; }}
+        >
+          <ringGeometry args={[data.distance - 0.5, data.distance + 0.5, 32]} />
+          <meshBasicMaterial visible={false} />
+        </mesh>
 
-      {/* Visual screen-space 3D tube line */}
-      <Line 
-        points={orbitPoints} 
-        visible={isPlanetSelected || globalSelected === data.name.toLowerCase()}
-        color="#ffffff" 
-        transparent 
-        opacity={0.5} 
-        lineWidth={2.5}
-        depthWrite={false} 
-        blending={THREE.AdditiveBlending} 
-      />
+        {/* Visual screen-space 3D tube line */}
+        <Line 
+          points={orbitPoints} 
+          visible={isPlanetSelected || globalSelected === data.name.toLowerCase()}
+          color="#ffffff" 
+          transparent 
+          opacity={0.5} 
+          lineWidth={2.5}
+          depthWrite={false} 
+          blending={THREE.AdditiveBlending} 
+        />
+      </group>
+
       <group ref={ref}>
         <mesh
           ref={meshRef}
@@ -427,10 +454,10 @@ function Satellite({ data, isPlanetSelected, globalSelected, onSelectObject }) {
         )}
 
         {(isPlanetSelected || globalSelected === data.name.toLowerCase() || hovered) && (
-          <FadingLabel targetRef={meshRef} radius={data.size} name={data.name} position={[0, data.size + 0.4, 0]} fontSize="10px" />
+          <FadingLabel targetRef={meshRef} radius={data.size} name={data.name} position={[0, data.size + 0.4, 0]} fontSize="10px" hovered={hovered} />
         )}
       </group>
-    </group>
+    </>
   );
 }
 
@@ -487,6 +514,7 @@ export default function Planet({ idName, isSelected, globalSelected, position, s
   const pureTilt = PLANET_DATA[idName]?.axialTilt || 0;
 
   return (
+    <>
     <group ref={groupRef} position={position}>
       {/* Minimalist trigonometric fading label replacing static scale strings */}
       <FadingLabel targetRef={meshRef} radius={scale[0]} name={name} position={[0, scale[1] * 1.4, 0]} fontSize="12px" />
@@ -562,7 +590,7 @@ export default function Planet({ idName, isSelected, globalSelected, position, s
       />
 
       {/* Flawless Continuous Alpha Ring Maps (NASA Match) */}
-      {hasRings && RING_DIMS[idName] && (
+      {hasRings && RING_DIMS[idName] && 
         <group rotation={[0, 0, PLANET_DATA[idName]?.axialTilt || 0]}>
           <mesh ref={ringRef} rotation={[Math.PI / 2, 0, 0]} castShadow receiveShadow>
             <ringGeometry
@@ -642,13 +670,21 @@ export default function Planet({ idName, isSelected, globalSelected, position, s
               } : undefined}
             />
           </mesh>
-        </group>
-      )}
+      </group>
+      }
 
-      {/* Moons */}
+      {/* Moons - Explicitly Decoupled from the Local Planet Group coordinate system */}
       {idName && PLANET_DATA[idName]?.moons?.map((moon, i) => (
-        <Satellite key={i} data={moon} isPlanetSelected={isSelected} globalSelected={globalSelected} onSelectObject={onSelectObject} />
+        <Satellite 
+          key={i} 
+          planetId={idName} 
+          data={moon} 
+          isPlanetSelected={isSelected} 
+          globalSelected={globalSelected} 
+          onSelectObject={onSelectObject} 
+        />
       ))}
     </group>
+    </>
   );
 }

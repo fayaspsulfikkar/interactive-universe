@@ -122,6 +122,7 @@ body, html, #root {
   letter-spacing: 1px;
   margin-bottom: 4px;
   background: linear-gradient(135deg, #fff, #88aaff);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -130,4 +131,154 @@ body, html, #root {
   font-size: 0.85rem;
   color: var(--text-secondary);
   font-weight: 300;
+}
+
+/* ─────────────────────────────────────────────────────────────────
+   RESPONSIVE UI CLASSES 
+────────────────────────────────────────────────────────────────── */
+
+/* Dashboard Layout */
+.dashboard-container {
+  position: absolute;
+  top: 4%;
+  left: 4%;
+  right: 4%;
+  bottom: 4%;
+  display: flex;
+  flex-direction: column;
+  padding: 40px 50px;
+  box-sizing: border-box;
+}
+
+.dashboard-main {
+  display: flex;
+  gap: 60px;
+  flex: 1;
+  min-height: 0;
+}
+
+.dashboard-left-panel {
+  width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  flex-shrink: 0;
+}
+
+.dashboard-right-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  min-width: 0;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px 24px;
+}
+
+.telemetry-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.4fr 1fr 1.2fr;
+  gap: 32px;
+}
+
+/* Time HUD */
+.time-hud {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  min-width: 260px;
+}
+
+/* Mini Solar System Nav */
+.mini-solar-system {
+  width: 560px;
+  height: 52px;
+}
+.nav-orbit-line { display: block; }
+
+
+/* ── Mobile Layout Overrides ── */
+@media (max-width: 768px) {
+  .dashboard-container {
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 0 !important;
+    padding: 24px 20px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .dashboard-main {
+    flex-direction: column;
+    gap: 32px;
+    height: auto;
+    overflow: visible;
+  }
+  
+  .dashboard-left-panel, 
+  .dashboard-right-panel {
+    width: 100%;
+  }
+  
+  .stat-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  
+  .telemetry-strip {
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  
+  /* Make the title overlay responsive */
+  .title-overlay {
+    top: 20px;
+    left: 20px;
+  }
+  .title-overlay h1 { font-size: 1.25rem; }
+  .title-overlay p { font-size: 0.75rem; }
+  
+  /* Shrink text */
+  .dashboard-left-panel h1 { font-size: 3.2rem !important; }
+  
+  .time-hud {
+    right: 50%;
+    transform: translateX(50%);
+    bottom: 90px;
+    transform-origin: bottom center;
+    scale: 0.85;
+  }
+  
+  .spacecraft-bottom-panel { 
+    bottom: 30px !important; 
+    width: 95% !important; 
+  }
+  .spacecraft-bottom-panel h1 { 
+    font-size: 2.2rem !important; 
+    letter-spacing: 4px !important; 
+  }
+  
+  .mini-solar-system {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto 10px auto !important;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 8px; /* Room for scrollbar if any */
+  }
+  .nav-orbit-line { display: none; } /* Hide the horizontal line on scrollable lists */
+}
+
+@media (max-width: 480px) {
+  .telemetry-strip {
+    grid-template-columns: 1fr;
+  }
+  .time-hud { scale: 0.75; bottom: 85px; }
+  .spacecraft-bottom-panel h1 { font-size: 1.8rem !important; }
 }

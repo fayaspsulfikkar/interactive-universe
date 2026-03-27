@@ -24,12 +24,14 @@ export const SPACECRAFT_DATA = [
     fullName: 'International Space Station',
     type: 'leo',
     parent: 'earth',
-    orbitRadius: 28,         // scene units (~408 km, exaggerated for visibility)
+    orbitRadius: 1.064,      // Real: ~408 km altitude (Earth R=1.0)
     orbitPeriod: 92.68 * 60, // 92.68 minutes in seconds
     initialAngle: 0.8,
     inclinationY: 0.9,       // rad — 51.6° inclination
     color: '#00e5ff',
     size: 1.4,
+    modelUrl: '/models/iss.glb',
+    modelScale: 0.000015,
   },
   {
     id: 'hubble',
@@ -37,12 +39,14 @@ export const SPACECRAFT_DATA = [
     fullName: 'Hubble Space Telescope',
     type: 'leo',
     parent: 'earth',
-    orbitRadius: 24,         // ~547 km altitude
+    orbitRadius: 1.085,      // Real: ~540 km altitude (Earth R=1.0)
     orbitPeriod: 95.4 * 60,
     initialAngle: 2.1,
     inclinationY: 0.49,      // 28.5° inclination
     color: '#7df9ff',
     size: 1.2,
+    modelUrl: '/models/hubble.glb',
+    modelScale: 0.000004,
   },
   {
     id: 'jwst',
@@ -55,6 +59,8 @@ export const SPACECRAFT_DATA = [
     l2Offset: 70,
     color: '#ffd700',
     size: 1.3,
+    modelUrl: '/models/jwst.glb',
+    modelScale: 0.00002,
   },
   {
     id: 'gps_a',
@@ -62,12 +68,14 @@ export const SPACECRAFT_DATA = [
     fullName: 'GPS Constellation (Block IIF)',
     type: 'meo',
     parent: 'earth',
-    orbitRadius: 80,         // MEO ~20,200 km
+    orbitRadius: 4.17,       // Real: ~20,200 km (Earth R=1.0)
     orbitPeriod: 12 * 3600,  // 12 hours
     initialAngle: 0.0,
     inclinationY: 0.96,
     color: '#88ff88',
     size: 0.9,
+    modelUrl: '/models/voyager.glb',
+    modelScale: 0.00004,
   },
   {
     id: 'gps_b',
@@ -75,12 +83,14 @@ export const SPACECRAFT_DATA = [
     fullName: 'GPS Constellation (Block III)',
     type: 'meo',
     parent: 'earth',
-    orbitRadius: 80,
+    orbitRadius: 4.17,
     orbitPeriod: 12 * 3600,
     initialAngle: Math.PI * 0.5,
     inclinationY: 0.96,
     color: '#88ff88',
     size: 0.9,
+    modelUrl: '/models/voyager.glb',
+    modelScale: 0.00004,
   },
   {
     id: 'starlink_a',
@@ -88,12 +98,14 @@ export const SPACECRAFT_DATA = [
     fullName: 'Starlink Group 6 (SpaceX)',
     type: 'leo',
     parent: 'earth',
-    orbitRadius: 18,         // ~550 km
+    orbitRadius: 1.086,      // Real: ~550 km (Earth R=1.0)
     orbitPeriod: 95 * 60,
     initialAngle: 1.0,
     inclinationY: 0.96,
     color: '#ccbbff',
     size: 0.8,
+    modelUrl: '/models/iss.glb',
+    modelScale: 0.00001,
   },
   {
     id: 'starlink_b',
@@ -101,12 +113,14 @@ export const SPACECRAFT_DATA = [
     fullName: 'Starlink Group 7 (SpaceX)',
     type: 'leo',
     parent: 'earth',
-    orbitRadius: 18,
+    orbitRadius: 1.086,
     orbitPeriod: 95 * 60,
     initialAngle: 1.0 + Math.PI,
     inclinationY: 0.96,
     color: '#ccbbff',
     size: 0.8,
+    modelUrl: '/models/iss.glb',
+    modelScale: 0.00001,
   },
 
   // ── Moon Missions ──────────────────────────────────────────────────────────
@@ -116,12 +130,14 @@ export const SPACECRAFT_DATA = [
     fullName: 'Lunar Reconnaissance Orbiter',
     type: 'lunar',
     parent: 'moon',
-    orbitRadius: 10,
+    orbitRadius: 0.280,      // Moon scene R=0.272 + ~50km alt = 0.280
     orbitPeriod: 1.968 * 3600, // ~118 minutes
     initialAngle: 1.5,
     inclinationY: 1.57,        // near-polar orbit
     color: '#ffffff',
     size: 0.8,
+    modelUrl: '/models/voyager.glb',
+    modelScale: 0.00004,
   },
 
   // ── Mars Missions ──────────────────────────────────────────────────────────
@@ -131,9 +147,12 @@ export const SPACECRAFT_DATA = [
     fullName: 'Mars Perseverance Rover (Jezero Crater)',
     type: 'mars_surface',
     parent: 'mars',
-    surfaceOffset: [7, 0.5, 2], // scene units from Mars center
+    // Mars scene R=0.532. Pin mathematically to surface.
+    surfaceOffset: [0.533 * Math.cos(2.5), 0, 0.533 * Math.sin(2.5)], 
     color: '#ff9944',
     size: 0.9,
+    modelUrl: '/models/perseverance.glb',
+    modelScale: 0.00008,
   },
   {
     id: 'curiosity',
@@ -141,9 +160,11 @@ export const SPACECRAFT_DATA = [
     fullName: 'Mars Curiosity Rover (Gale Crater)',
     type: 'mars_surface',
     parent: 'mars',
-    surfaceOffset: [-6, 0.3, 3],
+    surfaceOffset: [0.533 * Math.cos(-1.1), 0, 0.533 * Math.sin(-1.1)],
     color: '#ffba66',
     size: 0.9,
+    modelUrl: '/models/perseverance.glb',
+    modelScale: 0.00008,
   },
   {
     id: 'mro',
@@ -151,12 +172,14 @@ export const SPACECRAFT_DATA = [
     fullName: 'Mars Reconnaissance Orbiter',
     type: 'mars_orbit',
     parent: 'mars',
-    orbitRadius: 22,
+    orbitRadius: 0.579,      // Mars R=0.532. MRO alt ~300km (1.088 factor). R = 0.579
     orbitPeriod: 1.88 * 3600,
     initialAngle: 0.5,
     inclinationY: 0.5,
     color: '#ff6633',
     size: 0.9,
+    modelUrl: '/models/voyager.glb',
+    modelScale: 0.00004,
   },
   {
     id: 'maven',
@@ -164,12 +187,14 @@ export const SPACECRAFT_DATA = [
     fullName: 'Mars Atmosphere and Volatile EvolutioN',
     type: 'mars_orbit',
     parent: 'mars',
-    orbitRadius: 35,
+    orbitRadius: 1.505,      // Mars R=0.532. MAVEN high elliptic alt (~6200km).
     orbitPeriod: 4.5 * 3600,
     initialAngle: 2.8,
     inclinationY: 1.15,
     color: '#ff8855',
     size: 0.9,
+    modelUrl: '/models/voyager.glb',
+    modelScale: 0.00004,
   },
 
   // ── Deep Space Probes ─────────────────────────────────────────────────────
@@ -185,6 +210,8 @@ export const SPACECRAFT_DATA = [
     color: '#44ddff',
     size: 1.5,
     trailColor: '#44ddff',
+    modelUrl: '/models/voyager.glb',
+    modelScale: 0.00005,
   },
   {
     id: 'voyager2',
@@ -195,6 +222,8 @@ export const SPACECRAFT_DATA = [
     position: [AU * 75 * Math.sin(1.2), AU * 75 * -0.62, AU * 75 * Math.cos(1.2)],
     color: '#44bbff',
     size: 1.4,
+    modelUrl: '/models/voyager.glb',
+    modelScale: 0.00005,
   },
   {
     id: 'pioneer10',
@@ -205,6 +234,8 @@ export const SPACECRAFT_DATA = [
     position: [AU * 70 * Math.sin(2.3), AU * 70 * 0.05, AU * 70 * Math.cos(2.3)],
     color: '#88aaff',
     size: 1.2,
+    modelUrl: '/models/voyager.glb',
+    modelScale: 0.00005,
   },
   {
     id: 'newhorizons',
@@ -215,6 +246,8 @@ export const SPACECRAFT_DATA = [
     position: [AU * 55 * Math.sin(5.4), AU * 55 * -0.08, AU * 55 * Math.cos(5.4)],
     color: '#ee88ff',
     size: 1.3,
+    modelUrl: '/models/voyager.glb',
+    modelScale: 0.00005,
   },
 ];
 

@@ -13,7 +13,7 @@
  */
 
 export const simClock = {
-  timeScale: 10000,   // 10 000× real-time by default (Earth orbits in ~52 min)
+  timeScale: 1000,   // 1 000× real-time by default (Slower, eliminates high-freq orbital jitter)
   _offset:   0,       // Correction applied when scale changes or on resume
   _paused:   false,
   _pausedAt: 0,       // simTime snapshot taken at the moment of pause

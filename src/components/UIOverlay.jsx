@@ -1,6 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Canvas, useFrame } from '@react-three/fiber';
+import { OrbitControls, useGLTF, Clone } from '@react-three/drei';
+import * as THREE_M from 'three';
 import { simClock } from '../simClock';
+import { SPACECRAFT_DATA } from './SpacecraftData';
 
 // ── Simulated date from clock time ────────────────────────────────────────────
 function formatSimDate(simTimeSec) {
@@ -62,20 +66,12 @@ function TimeHUD() {
   const btnActive = { ...btnBase, background: 'rgba(77,160,255,0.25)', borderColor: 'rgba(77,160,255,0.6)', color: '#fff' };
 
   return (
-    <div style={{
-      position: 'fixed',
-      bottom: '24px',
-      right: '24px',
+    <div className="glass-panel time-hud" style={{
       background: 'linear-gradient(135deg,rgba(8,12,22,0.88),rgba(4,7,14,0.80))',
-      backdropFilter: 'blur(14px)',
-      border: '1px solid rgba(255,255,255,0.08)',
-      borderRadius: '6px',
       padding: '12px 16px',
       display: 'flex',
       flexDirection: 'column',
       gap: '8px',
-      minWidth: '260px',
-      boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
       fontFamily: 'var(--font-main, monospace)',
       zIndex: 1000,
     }}>
@@ -621,24 +617,23 @@ function Dashboard({ data, onClose }) {
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 1.015 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.985 }}
-      transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+      initial={{ opacity: 0, scale: 0.85, y: 150, scaleY: 0.5, filter: 'blur(25px)', borderRadius: '100px' }}
+      animate={{ opacity: 1, scale: 1, y: 0, scaleY: 1, filter: 'blur(0px)', borderRadius: '24px' }}
+      exit={{ opacity: 0, scale: 0.85, y: 150, scaleY: 0.5, filter: 'blur(25px)', borderRadius: '100px' }}
+      transition={{ type: 'spring', damping: 14, stiffness: 100, mass: 0.6 }}
+      className="dashboard-container"
       style={{
-        position: 'absolute', top: 0, left: 0, width: '100vw', height: '100vh',
-        pointerEvents: 'auto', display: 'flex', flexDirection: 'column',
-        padding: '40px 56px', fontFamily: 'var(--font-main, sans-serif)', color: '#fff',
-        boxSizing: 'border-box', zIndex: 50, overflow: 'hidden'
+        pointerEvents: 'auto', fontFamily: 'var(--font-main, sans-serif)', color: '#fff',
+        zIndex: 50, overflow: 'hidden',
+        background: 'rgba(5, 10, 20, 0.55)', backdropFilter: 'blur(30px) saturate(150%)',
+        border: '1px solid rgba(255,255,255,0.06)', boxShadow: '0 40px 100px rgba(0,0,0,0.8)'
       }}
     >
       {/* Edge-lighting backgrounds */}
-      <div style={{ position: 'absolute', inset: 0, zIndex: -3, pointerEvents: 'none', background: 'rgba(0,4,14,0.60)' }} />
-      <motion.div animate={{ background: `linear-gradient(to right, ${theme.accent}14 0%, transparent 38%)` }} transition={{ duration: 1.2 }} style={{ position: 'absolute', inset: 0, zIndex: -2, pointerEvents: 'none' }} />
-      <motion.div animate={{ background: `linear-gradient(to left, ${theme.accent}0d 0%, transparent 38%)` }} transition={{ duration: 1.2 }} style={{ position: 'absolute', inset: 0, zIndex: -2, pointerEvents: 'none' }} />
-      <div style={{ position: 'absolute', inset: 0, zIndex: -2, pointerEvents: 'none', background: 'linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 20%)' }} />
-      <div style={{ position: 'absolute', inset: 0, zIndex: -2, pointerEvents: 'none', background: 'linear-gradient(to top, rgba(0,4,14,0.9) 0%, transparent 25%)' }} />
-      <div style={{ position: 'absolute', inset: 0, zIndex: -1, pointerEvents: 'none', opacity: 0.05, mixBlendMode: 'overlay', backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
+      <motion.div animate={{ background: `linear-gradient(to right, ${theme.accent}1A 0%, transparent 40%)` }} transition={{ duration: 1.2 }} style={{ position: 'absolute', inset: 0, zIndex: -2, pointerEvents: 'none' }} />
+      <motion.div animate={{ background: `linear-gradient(to left, ${theme.accent}0f 0%, transparent 40%)` }} transition={{ duration: 1.2 }} style={{ position: 'absolute', inset: 0, zIndex: -2, pointerEvents: 'none' }} />
+      <div style={{ position: 'absolute', inset: 0, zIndex: -2, pointerEvents: 'none', background: 'linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 20%)' }} />
+      <div style={{ position: 'absolute', inset: 0, zIndex: -1, pointerEvents: 'none', opacity: 0.08, mixBlendMode: 'overlay', backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")` }} />
 
       {/* ── TOP BAR ─────────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', marginBottom: '28px' }}>
@@ -653,10 +648,10 @@ function Dashboard({ data, onClose }) {
       </div>
 
       {/* ── MAIN CONTENT: Left + Right ────────────────────────────────── */}
-      <div style={{ display: 'flex', gap: '60px', flex: 1, minHeight: 0 }}>
+      <div className="dashboard-main">
 
         {/* LEFT PANEL */}
-        <div style={{ width: '380px', display: 'flex', flexDirection: 'column', gap: '24px', flexShrink: 0 }}>
+        <div className="dashboard-left-panel">
           {/* Hero title */}
           <div>
             <motion.div animate={{ color: theme.accent }} transition={{ duration: 1.0 }}
@@ -671,7 +666,7 @@ function Dashboard({ data, onClose }) {
           </div>
 
           {/* Physical stats 2×3 grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px 24px' }}>
+          <div className="stat-grid">
             <StatBlock label="Mean Radius" value={p.radius} accent={theme.accent} />
             <StatBlock label="Mass" value={p.mass} accent={theme.accent} />
             <StatBlock label="Surface Gravity" value={p.gravity} accent={theme.accent} />
@@ -696,7 +691,7 @@ function Dashboard({ data, onClose }) {
         </div>
 
         {/* RIGHT PANEL */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '28px', minWidth: 0 }}>
+        <div className="dashboard-right-panel">
 
           {/* Atmosphere composition bars */}
           {a.composition && a.composition.length > 0 && (
@@ -774,7 +769,8 @@ function Dashboard({ data, onClose }) {
         initial={{ y: 40, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.8, delay: 0.25 }}
-        style={{ width: '100%', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '22px', marginTop: '16px', display: 'grid', gridTemplateColumns: '1fr 1fr 1.4fr 1fr 1.2fr', gap: '32px' }}
+        className="telemetry-strip"
+        style={{ width: '100%', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '22px', marginTop: '16px' }}
       >
         {/* Orbital Mechanics */}
         <div>
@@ -841,6 +837,120 @@ function Dashboard({ data, onClose }) {
 }
 
 
+// ── SPACECRAFT ISOLATED 3D VIEWER MODAL ──────────────────────────────────────
+function IsolatedModel({ url }) {
+  const { scene } = useGLTF(url);
+  const ref = useRef();
+  const normalizedRef = useRef(false);
+
+  useEffect(() => {
+    if (!ref.current || normalizedRef.current) return;
+    // Auto-fit ANY glb into a 2-unit bounding sphere regardless of real-world scale
+    // By waiting for the Clone to mount, we can safely measure and scale its hierarchy
+    const box = new THREE_M.Box3().setFromObject(ref.current);
+    const size = box.getSize(new THREE_M.Vector3());
+    const maxDim = Math.max(size.x, size.y, size.z);
+    
+    // Fallback scale if bounding box computation fails (e.g. bones/empty hierarchies)
+    if (maxDim > 0 && maxDim < Infinity) {
+      const uniformScale = 2.0 / maxDim;
+      ref.current.scale.setScalar(uniformScale);
+      
+      const center = box.getCenter(new THREE_M.Vector3());
+      ref.current.position.sub(center.multiplyScalar(uniformScale));
+    } else {
+      // Fallback manual override for notorious models
+      if (url.includes('iss')) ref.current.scale.setScalar(0.04);
+      if (url.includes('hubble')) ref.current.scale.setScalar(0.015);
+      if (url.includes('jwst')) ref.current.scale.setScalar(0.05);
+    }
+    
+    normalizedRef.current = true;
+  });
+
+  useFrame((state, delta) => {
+    if (ref.current) {
+      ref.current.rotation.y += delta * 0.18;
+      ref.current.rotation.z = Math.sin(state.clock.elapsedTime * 0.3) * 0.08;
+    }
+  });
+
+  return <Clone ref={ref} object={scene} />;
+}
+
+function SpacecraftViewer({ craft, data, onReturnToParent }) {
+  const theme = data.theme || { accent: '#44aaff' };
+  
+  return (
+    <motion.div
+      initial={{ opacity: 0, filter: 'blur(30px)' }}
+      animate={{ opacity: 1, filter: 'blur(0px)' }}
+      exit={{ opacity: 0, filter: 'blur(30px)' }}
+      transition={{ duration: 0.8, ease: 'easeOut' }}
+      style={{
+        position: 'absolute', inset: 0, zIndex: 200,
+        background: 'rgba(2, 5, 12, 0.45)', backdropFilter: 'blur(40px) saturate(160%)',
+        display: 'flex', flexDirection: 'column', pointerEvents: 'auto'
+      }}
+    >
+      {/* Top Navigation */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '40px 50px', zIndex: 10 }}>
+        <motion.div animate={{ color: theme.accent }} transition={{ duration: 1.0 }} style={{ fontSize: '0.65rem', letterSpacing: '12px', textTransform: 'uppercase', opacity: 0.8, fontWeight: 600 }}>
+          Spacecraft Telemetry Link
+        </motion.div>
+        <button
+          onClick={onReturnToParent}
+          style={{ background: 'transparent', border: `1px solid ${theme.accent}66`, color: '#fff', fontSize: '0.6rem', letterSpacing: '4px', textTransform: 'uppercase', cursor: 'pointer', padding: '8px 24px', borderRadius: '4px', transition: 'all 0.2s', backdropFilter: 'blur(4px)' }}
+          onMouseOver={e => { e.currentTarget.style.background = `${theme.accent}33`; }}
+          onMouseOut={e => { e.currentTarget.style.background = 'transparent'; }}
+        >
+          ← Back to {craft.parent ? craft.parent.charAt(0).toUpperCase() + craft.parent.slice(1) : 'System'}
+        </button>
+      </div>
+
+      {/* Fullscreen 3D Canvas */}
+      <div style={{ position: 'absolute', inset: 0, zIndex: 1, cursor: 'grab' }}>
+        <Canvas
+          camera={{ position: [0, 1.5, 4], fov: 40 }}
+          gl={{ alpha: true, antialias: true, preserveDrawingBuffer: false }}
+        >
+          <color attach="background" args={['#000000']} />
+          <fog attach="fog" args={['#000308', 10, 60]} />
+          <ambientLight intensity={0.6} />
+          <directionalLight position={[5, 8, 5]} intensity={3.0} color="#ffffff" castShadow />
+          <directionalLight position={[-8, -4, -6]} intensity={0.8} color={theme.accent} />
+          <pointLight position={[0, 0, 3]} intensity={1.2} color={theme.accent} distance={20} />
+          <Suspense fallback={null}>
+            <IsolatedModel url={craft.modelUrl} />
+          </Suspense>
+          <OrbitControls
+            enablePan={false}
+            enableZoom={true}
+            autoRotate={false}
+            minDistance={1.5}
+            maxDistance={12}
+            enableDamping
+            dampingFactor={0.08}
+          />
+        </Canvas>
+      </div>
+
+      {/* Floating Bottom Data Panel */}
+      <div className="spacecraft-bottom-panel" style={{ position: 'absolute', bottom: '60px', left: '50%', transform: 'translateX(-50%)', textAlign: 'center', zIndex: 10, width: '80%', maxWidth: '800px' }}>
+        <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3, duration: 0.8 }}>
+          <h1 style={{ fontSize: '3.5rem', margin: '0 0 16px 0', letterSpacing: '12px', fontWeight: 200, textTransform: 'uppercase', textShadow: `0 0 40px ${theme.accent}88` }}>
+            {data.name}
+          </h1>
+          <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)', lineHeight: 1.8, letterSpacing: '0.5px' }}>
+            {data.description}
+          </p>
+        </motion.div>
+      </div>
+    </motion.div>
+  );
+}
+
+
 // Mini solar system navigator with real texture spheres, glass hover, selection magnification
 const PLANET_STRIP = [
   { id: 'sun',     tex: '/textures/8k_sun.jpg',       fallback: '#ffcc88', baseSz: 18 },
@@ -858,12 +968,12 @@ function MiniSolarSystem({ selectedObject, accentColor, glowColor, onSelectObjec
   const [hovered, setHovered] = useState(null);
 
   return (
-    <div style={{
+    <div className="mini-solar-system" style={{
       display: 'flex', alignItems: 'center', marginBottom: '20px',
-      position: 'relative', width: '560px', height: '52px',
+      position: 'relative',
     }}>
       {/* Connecting orbit line */}
-      <div style={{
+      <div className="nav-orbit-line" style={{
         position: 'absolute', top: '50%', left: '8px', right: '8px',
         height: '1px', background: 'rgba(255,255,255,0.1)', transform: 'translateY(-50%)',
         pointerEvents: 'none',
@@ -982,12 +1092,24 @@ export default function UIOverlay({ selectedObject, onSelectObject, onClose, isE
   const isSolarSystem = !selectedObject || selectedObject === 'solar_system';
   const data = OBJECT_DATA[selectedObject] || OBJECT_DATA.solar_system;
 
+  // Intercept spacecraft clicks → render isolated 3D modal instead of planetary bottom-bar
+  const craft = SPACECRAFT_DATA.find(c => c.id === selectedObject);
+  const isSpacecraft = !!craft && !!craft.modelUrl;
+
+  // When returning from spacecraft viewer, go back to the parent planet
+  const handleSpacecraftClose = () => {
+    if (craft?.parent) {
+      onSelectObject(craft.parent);
+    } else {
+      onClose();
+    }
+  };
+
   return (
     <div className="ui-overlay">
 
-
-      {/* ── Back button — top-left, only when a body is selected ─────── */}
-      {!isSolarSystem && !isExpanded && (
+      {/* ── Back button — top-left, only when a body is selected (not spacecraft modal) */}
+      {!isSolarSystem && !isExpanded && !isSpacecraft && (
         <motion.button
           initial={{ opacity: 0, x: -10 }}
           animate={{ opacity: 1, x: 0 }}
@@ -1014,93 +1136,101 @@ export default function UIOverlay({ selectedObject, onSelectObject, onClose, isE
         </motion.button>
       )}
 
-      <AnimatePresence>
-        {!isExpanded && (
-          <motion.div
-            key="bottom-bar"
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-            style={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              width: '100%',
-              height: '34vh',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'flex-end',
-              paddingBottom: '28px',
-              background: 'linear-gradient(to top, rgba(0,4,14,0.88) 0%, rgba(0,4,14,0.5) 40%, transparent 100%)',
-              pointerEvents: 'auto',
-              fontFamily: 'var(--font-main, sans-serif)',
-              boxSizing: 'border-box',
-              textAlign: 'center',
-            }}
-          >
-            {/* ── Mini Solar System Navigator ───────────────────────────── */}
-            <MiniSolarSystem selectedObject={selectedObject} accentColor={data.theme.accent} glowColor={data.theme.glow} onSelectObject={onSelectObject} />
+      <AnimatePresence mode="wait">
+        {isSpacecraft ? (
+          /* ── Spacecraft Isolated Modal: blurred backdrop + dedicated 3D canvas ─── */
+          <SpacecraftViewer key={`sv-${selectedObject}`} craft={craft} data={data} onReturnToParent={handleSpacecraftClose} />
+        ) : (
+          <>
+            {!isExpanded && (
+              <motion.div
+                key="bottom-bar"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  width: '100%',
+                  height: 'auto',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                  paddingBottom: '16px',
+                  paddingTop: '60px',
+                  background: 'linear-gradient(to top, rgba(0,4,14,0.95) 0%, rgba(0,4,14,0.4) 60%, transparent 100%)',
+                  pointerEvents: 'auto',
+                  fontFamily: 'var(--font-main, sans-serif)',
+                  boxSizing: 'border-box',
+                  textAlign: 'center',
+                }}
+              >
+                {/* ── Mini Solar System Navigator ──────────────────────────── */}
+                <div style={{ transform: 'scale(0.85)', marginBottom: '-10px' }}>
+                  <MiniSolarSystem selectedObject={selectedObject} accentColor={data.theme.accent} glowColor={data.theme.glow} onSelectObject={onSelectObject} />
+                </div>
 
-            {/* Planet type + name */}
-            <motion.div animate={{ color: data.theme.accent }} transition={{ duration: 1.0 }}
-              style={{ fontSize: '0.52rem', letterSpacing: '8px', textTransform: 'uppercase', marginBottom: '6px', fontWeight: 500 }}>
-              {data.type}
-            </motion.div>
-            <h2 style={{ color: '#ffffff', fontSize: '2.2rem', letterSpacing: '14px', margin: '0 0 12px 0', lineHeight: 1, fontWeight: 200, textShadow: '0 0 30px rgba(120,180,255,0.3)' }}>
-              {data.name.toUpperCase()}
-            </h2>
+                {/* Planet type + name */}
+                <motion.div animate={{ color: data.theme.accent }} transition={{ duration: 1.0 }}
+                  style={{ fontSize: '0.45rem', letterSpacing: '6px', textTransform: 'uppercase', marginBottom: '2px', fontWeight: 600 }}>
+                  {data.type}
+                </motion.div>
+                <h2 style={{ color: '#ffffff', fontSize: '1.6rem', letterSpacing: '10px', margin: '0 0 8px 0', lineHeight: 1, fontWeight: 200, textShadow: '0 0 20px rgba(120,180,255,0.3)' }}>
+                  {data.name.toUpperCase()}
+                </h2>
 
-            {/* Two key stats */}
-            {data.physical && (
-              <div style={{ display: 'flex', gap: '40px', marginBottom: '12px' }}>
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '0.52rem', color: 'rgba(255,255,255,0.35)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '3px' }}>Radius</div>
-                  <motion.div animate={{ color: data.theme.accent }} style={{ fontSize: '0.85rem', fontFamily: 'monospace' }}>{data.physical.radius}</motion.div>
-                </div>
-                <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)' }} />
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '0.52rem', color: 'rgba(255,255,255,0.35)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '3px' }}>Gravity</div>
-                  <motion.div animate={{ color: data.theme.accent }} style={{ fontSize: '0.85rem', fontFamily: 'monospace' }}>{data.physical.gravity}</motion.div>
-                </div>
-                <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)' }} />
-                <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: '0.52rem', color: 'rgba(255,255,255,0.35)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '3px' }}>Orbit Speed</div>
-                  <motion.div animate={{ color: data.theme.accent }} style={{ fontSize: '0.85rem', fontFamily: 'monospace' }}>{data.orbit?.speed || 'N/A'}</motion.div>
-                </div>
-              </div>
+                {/* Two key stats */}
+                {data.physical && (
+                  <div style={{ display: 'flex', gap: '30px', marginBottom: '8px' }}>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '0.45rem', color: 'rgba(255,255,255,0.35)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '2px' }}>Radius</div>
+                      <motion.div animate={{ color: data.theme.accent }} style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}>{data.physical.radius}</motion.div>
+                    </div>
+                    <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)' }} />
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '0.45rem', color: 'rgba(255,255,255,0.35)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '2px' }}>Gravity</div>
+                      <motion.div animate={{ color: data.theme.accent }} style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}>{data.physical.gravity}</motion.div>
+                    </div>
+                    <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)' }} />
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontSize: '0.45rem', color: 'rgba(255,255,255,0.35)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '2px' }}>Orbit Speed</div>
+                      <motion.div animate={{ color: data.theme.accent }} style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}>{data.orbit?.speed || 'N/A'}</motion.div>
+                    </div>
+                  </div>
+                )}
+
+                <p style={{ maxWidth: '500px', fontSize: '0.62rem', color: '#8090a8', lineHeight: 1.5, fontWeight: 300, margin: '8px 0 12px 0', letterSpacing: '0.5px' }}>
+                  {data.description}
+                </p>
+
+                <button
+                  onClick={() => setIsExpanded(true)}
+                  style={{
+                    background: 'transparent', border: 'none', color: '#fff',
+                    fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '5px',
+                    cursor: 'pointer', transition: 'all 0.3s ease',
+                    padding: '8px 20px', fontWeight: 600,
+                    borderBottom: `1px solid rgba(255,255,255,0.2)`
+                  }}
+                  onMouseOver={(e) => { e.currentTarget.style.borderColor = '#fff'; }}
+                  onMouseOut={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; }}
+                >
+                  Deep Telemetry  ›
+                </button>
+              </motion.div>
             )}
 
-            <motion.div animate={{ background: `linear-gradient(90deg, transparent, ${data.theme.accent}, transparent)` }} transition={{ duration: 1.0 }}
-              style={{ width: '200px', height: '1px', marginBottom: '10px', opacity: 0.5 }} />
-
-            <p style={{ maxWidth: '580px', fontSize: '0.7rem', color: '#8090a8', lineHeight: 1.7, fontWeight: 300, margin: '0 0 18px 0', letterSpacing: '0.8px' }}>
-              {data.description}
-            </p>
-
-            <button
-              onClick={() => setIsExpanded(true)}
-              style={{
-                background: 'transparent', border: 'none', color: '#fff',
-                fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '5px',
-                cursor: 'pointer', transition: 'all 0.3s ease',
-                padding: '8px 20px', fontWeight: 600,
-                borderBottom: `1px solid rgba(255,255,255,0.2)`
-              }}
-              onMouseOver={(e) => { e.currentTarget.style.borderColor = '#fff'; }}
-              onMouseOut={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; }}
-            >
-              Deep Telemetry  ›
-            </button>
-          </motion.div>
-        )}
-
-        {data && isExpanded && (
-          <Dashboard key="dashboard" data={data} onClose={() => setIsExpanded(false)} />
+            {data && isExpanded && (
+              <Dashboard key="dashboard" data={data} onClose={() => setIsExpanded(false)} />
+            )}
+          </>
         )}
       </AnimatePresence>
 
     </div>
   );
 }
+
