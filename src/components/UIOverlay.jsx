@@ -597,6 +597,175 @@ function StatBlock({ label, value, accent }) {
   );
 }
 
+function MobileAccordion({ title, children, accent }) {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', willChange: 'transform' }}>
+      <div 
+        onClick={() => setIsOpen(!isOpen)}
+        style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 0', cursor: 'pointer' }}
+      >
+        <span style={{ fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '3px', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>{title}</span>
+        <motion.span animate={{ rotate: isOpen ? 180 : 0 }} style={{ color: accent, fontSize: '0.6rem' }}>▼</motion.span>
+      </div>
+      <AnimatePresence initial={false}>
+        {isOpen && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.35, ease: 'easeOut' }} style={{ overflow: 'hidden' }}>
+            <div style={{ paddingBottom: '20px' }}>{children}</div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+function MobileDashboard({ data, onClose, theme, p, r, o, a, gravPct, tempPct, maxTempC, massPct }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 50, filter: 'blur(10px)' }}
+      animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+      exit={{ opacity: 0, y: 50, filter: 'blur(10px)' }}
+      transition={{ duration: 0.5, ease: 'easeOut' }}
+      className="dashboard-container glass-panel"
+      style={{
+        fontFamily: 'var(--font-main, sans-serif)', color: '#fff',
+        zIndex: 50, background: 'rgba(5, 10, 20, 0.85)', backdropFilter: 'none',
+        display: 'block'
+      }}
+    >
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+        <div>
+          <div className="mobile-sub" style={{ color: theme.accent, letterSpacing: '6px', textTransform: 'uppercase', marginBottom: '4px', fontWeight: 600 }}>{data.type}</div>
+          <h1 className="mobile-h1" style={{ margin: 0, color: '#fff', textTransform: 'uppercase', lineHeight: 1.1 }}>{data.name}</h1>
+        </div>
+        <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', fontSize: '0.6rem', letterSpacing: '2px', textTransform: 'uppercase', padding: '10px 16px', borderRadius: '4px', flexShrink: 0 }}>Close ✕</button>
+      </div>
+
+      <p className="mobile-p" style={{ color: 'rgba(255,255,255,0.55)', marginBottom: '32px' }}>{data.description}</p>
+
+      {/* Primary Stats Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px 16px', marginBottom: '40px' }}>
+        <StatBlock label="Mean Radius" value={p.radius} accent={theme.accent} />
+        <StatBlock label="Mass" value={p.mass} accent={theme.accent} />
+        <StatBlock label="Surface Gravity" value={p.gravity} accent={theme.accent} />
+        <StatBlock label="Escape Velocity" value={p.escapeVelocity} accent={theme.accent} />
+        <StatBlock label="Axial Tilt" value={r.tilt} accent={theme.accent} />
+        <StatBlock label="Formation Age" value={data.age} accent={theme.accent} />
+      </div>
+
+      {/* Diagnostics Snap Row */}
+      <div style={{ marginBottom: '40px' }}>
+        <div style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '3px', marginBottom: '16px' }}>Core Diagnostics</div>
+        <div className="snap-scroll-row">
+          {[
+            { label: 'Gravity', pct: gravPct, value: p.gravity || '—', sub: 'm/s²' },
+            { label: 'Temp Scale', pct: tempPct, value: a.temp ? `${maxTempC}°C` : '—', sub: 'Peak' },
+            { label: 'Mass Scale', pct: massPct, value: p.mass ? p.mass.split(' ')[0] : '—', sub: 'relative' },
+          ].map((g, i) => (
+            <div key={i} style={{ position: 'relative', width: '110px', height: '110px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.03)', borderRadius: '16px' }}>
+              <svg width="90" height="90" viewBox="0 0 100 100" style={{ position: 'absolute', inset: '10px', transform: 'rotate(-90deg)' }}>
+                <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="4" />
+                <motion.circle cx="50" cy="50" r="40" fill="none" strokeWidth="4" strokeDasharray="251.2"
+                  initial={{ strokeDashoffset: 251.2 }}
+                  animate={{ strokeDashoffset: 251.2 - (251.2 * g.pct) / 100, stroke: theme.accent }}
+                  transition={{ duration: 1.6, ease: 'easeOut' }} strokeLinecap="round" />
+              </svg>
+              <div style={{ textAlign: 'center', zIndex: 1 }}>
+                <div style={{ fontSize: '0.9rem', fontFamily: 'monospace', fontWeight: 600, color: theme.accent }}>{Math.round(g.pct)}%</div>
+                <div style={{ fontSize: '0.45rem', color: 'rgba(255,255,255,0.35)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '1px' }}>{g.label}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Atmospheric Composition Vertical Bars */}
+      {a.composition && a.composition.length > 0 && (
+        <div style={{ marginBottom: '40px' }}>
+          <div style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '3px', marginBottom: '16px' }}>
+            Atmospheric Composition
+            {a.pressure && <span style={{display: 'block', marginTop: '4px', color:'rgba(255,255,255,0.25)'}}>{a.pressure}</span>}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {a.composition.map(c => (
+              <div key={c.name} style={{ width: '100%' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: '1px' }}>{c.name}</span>
+                  <span style={{ fontSize: '0.6rem', color: theme.accent, fontFamily: 'monospace', fontWeight: 600 }}>{c.val}%</span>
+                </div>
+                <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px', position: 'relative' }}>
+                   <motion.div initial={{ width: 0 }} animate={{ width: `${Math.min(c.val, 100)}%`, backgroundColor: theme.accent }} transition={{ duration: 1.4, ease: 'easeOut' }} style={{ position: 'absolute', top: 0, left: 0, bottom: 0, borderRadius: '2px' }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Known Moons Highlight */}
+      {data.moons && (
+        <div style={{ marginBottom: '40px', background: 'rgba(255,255,255,0.03)', padding: '24px', borderRadius: '16px' }}>
+           <div style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '3px', marginBottom: '12px' }}>Known Moons</div>
+           <div style={{ fontSize: '4rem', color: theme.accent, fontFamily: 'monospace', fontWeight: 100, lineHeight: 1, marginBottom: '16px' }}>{data.moons.count || 0}</div>
+           <div className="mobile-p" style={{ color: 'rgba(255,255,255,0.5)' }}>{data.moons.list || '—'}</div>
+        </div>
+      )}
+      
+      {/* Fun Fact Box */}
+      {data.fact && (
+        <div style={{ borderLeft: `3px solid ${theme.accent}`, paddingLeft: '16px', marginBottom: '40px' }}>
+           <div style={{ fontSize: '0.55rem', color: theme.accent, textTransform: 'uppercase', letterSpacing: '3px', marginBottom: '8px', fontWeight: 600 }}>Quick Fact</div>
+           <div className="mobile-p" style={{ color: 'rgba(255,255,255,0.8)' }}>{data.fact}</div>
+        </div>
+      )}
+
+      {/* Detailed Accordions */}
+      <div style={{ marginBottom: '60px' }}>
+        <MobileAccordion title="Orbital Mechanics" accent={theme.accent}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {[['Year Length', o.period], ['Distance from Sun', o.distance], ['Orbit Speed', o.speed], ['Eccentricity', o.eccentricity]].map(([l, v]) => (
+              <div key={l}>
+                <div style={{ fontSize: '0.5rem', color: 'rgba(255,255,255,0.28)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '2px' }}>{l}</div>
+                <div className="mobile-p" style={{ color: 'rgba(255,255,255,0.78)' }}>{v || '—'}</div>
+              </div>
+            ))}
+          </div>
+        </MobileAccordion>
+        
+        <MobileAccordion title="Rotation" accent={theme.accent}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {[['Day Length', r.period], ['Axial Tilt', r.tilt], ['Rotation Speed', r.speed], ['Direction', r.direction]].map(([l, v]) => (
+              <div key={l}>
+                <div style={{ fontSize: '0.5rem', color: 'rgba(255,255,255,0.28)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '2px' }}>{l}</div>
+                <div className="mobile-p" style={{ color: 'rgba(255,255,255,0.78)' }}>{v || '—'}</div>
+              </div>
+            ))}
+          </div>
+        </MobileAccordion>
+
+        {data.water && (
+          <MobileAccordion title="Water & Geology" accent={theme.accent}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ fontSize: '0.62rem', fontWeight: 600, letterSpacing: '2px', textTransform: 'uppercase', color: data.water.present ? '#44ffaa' : '#ff6644' }}>
+                {data.water.present ? '● Water Detected' : '○ Water Absent'}
+              </div>
+              <div className="mobile-p" style={{ color: 'rgba(255,255,255,0.6)' }}>{data.water.details || '—'}</div>
+            </div>
+          </MobileAccordion>
+        )}
+        
+        {data.impact && (
+          <MobileAccordion title="Systemic Impact" accent={theme.accent}>
+            <div className="mobile-p" style={{ color: 'rgba(255,255,255,0.6)' }}>{data.impact}</div>
+          </MobileAccordion>
+        )}
+      </div>
+
+    </motion.div>
+  );
+}
+
 function Dashboard({ data, onClose }) {
   const theme = data.theme;
   const p = data.physical || {};
@@ -614,6 +783,17 @@ function Dashboard({ data, onClose }) {
   const massStr = (p.mass || '').replace(/[^0-9.e+\-]/g, '');
   const massNum = parseFloat(massStr) || 0;
   const massPct = Math.min(100, massNum > 1e28 ? 100 : massNum > 1e26 ? 75 : massNum > 1e24 ? 50 : 25);
+
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  if (isMobile) {
+    return <MobileDashboard data={data} onClose={onClose} theme={theme} p={p} r={r} o={o} a={a} gravPct={gravPct} tempPct={tempPct} maxTempC={maxTempC} massPct={massPct} />;
+  }
 
   return (
     <motion.div

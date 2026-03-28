@@ -252,22 +252,48 @@ body, html, #root {
   /* Note: Removed .mini-solar-system overflow overrides here to prevent shadow clipping */
 
   .dashboard-container {
+    position: fixed !important;
+    width: 100vw !important;
+    height: 100dvh !important;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
+    margin: 0 !important;
     border-radius: 0 !important;
-    padding: 24px 20px;
+    padding: max(24px, env(safe-area-inset-top)) 20px max(32px, env(safe-area-inset-bottom)) 20px !important;
     overflow-y: auto;
+    overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
   }
   
   .dashboard-main {
     flex-direction: column;
-    gap: 32px;
+    gap: 24px;
     height: auto;
     overflow: visible;
   }
+  
+  .snap-scroll-row {
+    display: flex;
+    gap: 16px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 12px;
+    margin-left: -20px;
+    width: 100vw;
+    padding-left: 20px;
+    padding-right: 20px;
+    -webkit-overflow-scrolling: touch;
+  }
+  .snap-scroll-row > * {
+    scroll-snap-align: start;
+    flex-shrink: 0;
+  }
+
+  .mobile-h1 { font-size: clamp(24px, 8vw, 40px) !important; letter-spacing: 4px !important; }
+  .mobile-h2 { font-size: clamp(16px, 5vw, 24px) !important; }
+  .mobile-p { font-size: clamp(12px, 3.5vw, 16px) !important; line-height: 1.6 !important; }
+  .mobile-sub { font-size: clamp(10px, 2.5vw, 12px) !important; }
   
   .dashboard-left-panel, 
   .dashboard-right-panel {
