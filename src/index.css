@@ -195,14 +195,62 @@ body, html, #root {
 
 /* Mini Solar System Nav */
 .mini-solar-system {
-  width: 560px;
-  height: 52px;
+  width: 100%;
+  max-width: 640px;
+  min-height: 80px; 
 }
-.nav-orbit-line { display: block; }
+.nav-orbit-line {
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  right: 8px;
+  height: 1px;
+  background: rgba(255,255,255,0.1);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
 
+.planet-icon-wrapper {
+  flex: 1;
+  transform: translateY(0);
+}
+
+/* Hero Stats Container */
+.hero-stat-row {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+.hero-stat-divider {
+  width: 1px;
+  height: 100%;
+  min-height: 24px;
+  background: rgba(255,255,255,0.1);
+}
 
 /* ── Mobile Layout Overrides ── */
 @media (max-width: 768px) {
+  .hero-stat-row {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+  }
+  .hero-stat-divider {
+    display: none;
+  }
+
+  .nav-orbit-line {
+    background: transparent;
+    height: 52px;
+    border-top: 1px solid rgba(255,255,255,0.2);
+    border-radius: 50%;
+    transform: translateY(0);
+    margin-top: -1px; 
+  }
+
+  /* Note: Removed .mini-solar-system overflow overrides here to prevent shadow clipping */
+
   .dashboard-container {
     top: 0;
     left: 0;
@@ -227,12 +275,12 @@ body, html, #root {
   }
   
   .stat-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 16px;
   }
   
   .telemetry-strip {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 24px;
   }
   
@@ -244,8 +292,14 @@ body, html, #root {
   .title-overlay h1 { font-size: 1.25rem; }
   .title-overlay p { font-size: 0.75rem; }
   
-  /* Shrink text */
-  .dashboard-left-panel h1 { font-size: 3.2rem !important; }
+  .composition-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .planet-icon-wrapper {
+    transform: translateY(var(--drop-y));
+  }
   
   .time-hud {
     right: 50%;
@@ -263,16 +317,6 @@ body, html, #root {
     font-size: 2.2rem !important; 
     letter-spacing: 4px !important; 
   }
-  
-  .mini-solar-system {
-    width: 100%;
-    max-width: 100%;
-    margin: 0 auto 10px auto !important;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding-bottom: 8px; /* Room for scrollbar if any */
-  }
-  .nav-orbit-line { display: none; } /* Hide the horizontal line on scrollable lists */
 }
 
 @media (max-width: 480px) {

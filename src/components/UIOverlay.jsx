@@ -699,7 +699,7 @@ function Dashboard({ data, onClose }) {
               <div style={{ fontSize: '0.55rem', color: 'rgba(255,255,255,0.45)', letterSpacing: '4px', textTransform: 'uppercase', marginBottom: '14px' }}>
                 Atmospheric Composition — {a.pressure && `Surface Pressure: ${a.pressure}`}
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 40px' }}>
+              <div className="composition-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 40px' }}>
                 {a.composition.map((c, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <div style={{ fontSize: '0.58rem', color: 'rgba(255,255,255,0.45)', width: '80px', flexShrink: 0 }}>{c.name}</div>
@@ -970,47 +970,53 @@ function MiniSolarSystem({ selectedObject, accentColor, glowColor, onSelectObjec
   return (
     <div className="mini-solar-system" style={{
       display: 'flex', alignItems: 'center', marginBottom: '20px',
-      position: 'relative',
+      position: 'relative', justifyContent: 'space-evenly', padding: '0 8px',
     }}>
       {/* Connecting orbit line */}
-      <div className="nav-orbit-line" style={{
-        position: 'absolute', top: '50%', left: '8px', right: '8px',
-        height: '1px', background: 'rgba(255,255,255,0.1)', transform: 'translateY(-50%)',
-        pointerEvents: 'none',
-      }} />
+      <div className="nav-orbit-line" />
 
-      {PLANET_STRIP.map(({ id, tex, fallback, baseSz }) => {
+      {PLANET_STRIP.map(({ id, tex, fallback, baseSz }, index) => {
         const isSelected = selectedObject === id;
         const isHov = hovered === id;
         const size = isSelected ? baseSz * 1.6 : baseSz;
         const isSun = id === 'sun';
+        
+        // Sphere Effect / Parabolic Curve Math
+        // Centralize around Jupiter (index 5 since there are 9 items, 0..8 so mid is 4)
+        const centerIndex = 4;
+        const distance = Math.abs(index - centerIndex);
+        // The further out, the deeper it drops. Scale factor controls the bend severity.
+        const dropY = distance * distance * 1.2;
 
         return (
-          <div key={id} style={{
-            flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center',
+          <div key={id} className="planet-icon-wrapper" style={{
+            display: 'flex', justifyContent: 'center', alignItems: 'center',
             cursor: 'pointer', zIndex: isSelected ? 10 : isHov ? 5 : 1,
+            '--drop-y': `${dropY}px`,
+            transition: 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)',
           }}
           onMouseEnter={() => setHovered(id)}
             onMouseLeave={() => setHovered(null)}
             onClick={() => onSelectObject && onSelectObject(id)}
           >
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative', width: size, height: size, flexShrink: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
               {/* Soft ambient glow halo for selected — no hard ring, just light */}
               {isSelected && (
                 <motion.div
                   animate={{
-                    boxShadow: [
-                      `0 0 14px 4px ${glowColor}55, 0 0 28px 8px ${glowColor}22`,
-                      `0 0 22px 8px ${glowColor}99, 0 0 44px 16px ${glowColor}33`,
-                      `0 0 14px 4px ${glowColor}55, 0 0 28px 8px ${glowColor}22`,
-                    ]
+                    opacity: [0.6, 1, 0.6],
+                    scale: [1, 1.15, 1],
                   }}
                   transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
                   style={{
                     position: 'absolute',
-                    inset: -10,
+                    top: -(size * 0.8), 
+                    left: -(size * 0.8), 
+                    right: -(size * 0.8), 
+                    bottom: -(size * 0.8),
                     borderRadius: '50%',
                     pointerEvents: 'none',
+                    background: `radial-gradient(circle at center, ${glowColor}AA 10%, ${glowColor}44 35%, transparent 60%)`,
                   }}
                 />
               )}
@@ -1067,10 +1073,10 @@ function MiniSolarSystem({ selectedObject, accentColor, glowColor, onSelectObjec
               {/* Hover label */}
               {isHov && (
                 <motion.div
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  initial={{ opacity: 0, y: 4, x: '-50%' }}
+                  animate={{ opacity: 1, y: 0, x: '-50%' }}
                   style={{
-                    position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)',
+                    position: 'absolute', top: '100%', left: '50%',
                     marginTop: '5px', fontSize: '0.42rem', letterSpacing: '1.5px',
                     textTransform: 'uppercase', color: 'rgba(255,255,255,0.65)',
                     whiteSpace: 'nowrap', pointerEvents: 'none',
@@ -1163,13 +1169,14 @@ export default function UIOverlay({ selectedObject, onSelectObject, onClose, isE
                   paddingTop: '60px',
                   background: 'linear-gradient(to top, rgba(0,4,14,0.95) 0%, rgba(0,4,14,0.4) 60%, transparent 100%)',
                   pointerEvents: 'auto',
+                  overflowX: 'hidden',
                   fontFamily: 'var(--font-main, sans-serif)',
                   boxSizing: 'border-box',
                   textAlign: 'center',
                 }}
               >
                 {/* ── Mini Solar System Navigator ──────────────────────────── */}
-                <div style={{ transform: 'scale(0.85)', marginBottom: '-10px' }}>
+                <div style={{ transform: 'scale(0.85)', marginBottom: '-10px', width: '100%', maxWidth: '640px' }}>
                   <MiniSolarSystem selectedObject={selectedObject} accentColor={data.theme.accent} glowColor={data.theme.glow} onSelectObject={onSelectObject} />
                 </div>
 
@@ -1184,17 +1191,17 @@ export default function UIOverlay({ selectedObject, onSelectObject, onClose, isE
 
                 {/* Two key stats */}
                 {data.physical && (
-                  <div style={{ display: 'flex', gap: '30px', marginBottom: '8px' }}>
+                  <div className="hero-stat-row">
                     <div style={{ textAlign: 'center' }}>
                       <div style={{ fontSize: '0.45rem', color: 'rgba(255,255,255,0.35)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '2px' }}>Radius</div>
                       <motion.div animate={{ color: data.theme.accent }} style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}>{data.physical.radius}</motion.div>
                     </div>
-                    <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)' }} />
+                    <div className="hero-stat-divider" />
                     <div style={{ textAlign: 'center' }}>
                       <div style={{ fontSize: '0.45rem', color: 'rgba(255,255,255,0.35)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '2px' }}>Gravity</div>
                       <motion.div animate={{ color: data.theme.accent }} style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}>{data.physical.gravity}</motion.div>
                     </div>
-                    <div style={{ width: '1px', background: 'rgba(255,255,255,0.1)' }} />
+                    <div className="hero-stat-divider" />
                     <div style={{ textAlign: 'center' }}>
                       <div style={{ fontSize: '0.45rem', color: 'rgba(255,255,255,0.35)', letterSpacing: '2px', textTransform: 'uppercase', marginBottom: '2px' }}>Orbit Speed</div>
                       <motion.div animate={{ color: data.theme.accent }} style={{ fontSize: '0.75rem', fontFamily: 'monospace' }}>{data.orbit?.speed || 'N/A'}</motion.div>

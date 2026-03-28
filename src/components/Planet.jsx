@@ -672,6 +672,7 @@ export default function Planet({ idName, isSelected, globalSelected, position, s
           </mesh>
       </group>
       }
+    </group>
 
       {/* Moons - Explicitly Decoupled from the Local Planet Group coordinate system */}
       {idName && PLANET_DATA[idName]?.moons?.map((moon, i) => (
@@ -684,7 +685,6 @@ export default function Planet({ idName, isSelected, globalSelected, position, s
           onSelectObject={onSelectObject} 
         />
       ))}
-    </group>
     </>
   );
 }
