@@ -2,6 +2,8 @@
 
 > A cinematic, scroll-based web experience simulating a breathtaking zoom-out journey from Earth to the edge of the observable universe. 
 
+**🌟 [Experience the Interactive Universe Explorer Live on Vercel!](https://interactive-universe-five.vercel.app/)**
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![React](https://img.shields.io/badge/React-19.0+-blue?logo=react)](https://react.dev/)
 [![Three.js](https://img.shields.io/badge/Three.js-Latest-white?logo=three.js)](https://threejs.org/)
