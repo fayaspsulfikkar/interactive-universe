@@ -33,15 +33,14 @@ function InteractiveRig({ selectedObject, isExpanded }) {
 
       let p;
       if (isExpanded) {
-        // Full-screen data dashboard: dead-center lock
-        const optimalDist = Math.max(8, data.scale[0] * 2.2);
+        // Full-screen data dashboard: dead-center lock, push camera tighter to clear UI
+        const optimalDist = data.scale[0] * 2.4;
         p = f.clone().add(new THREE.Vector3(0, 0, optimalDist));
       } else {
         // ── HERO VIEW ────────────────────────────────────────────────────────
         // Physics-accurate formula: dist = radius / (fill_fraction * tan(fov/2))
-        // With FOV~50° → tan(25°)≈0.466, fill=0.75 → dist ≈ radius * 2.86
-        // Add 10% margin → scale * 3.15 keeps planet fully unclipped
-        const heroDist = Math.max(10, data.scale[0] * 3.2);
+        // Pure proportional multiplier guarantees EVERY planet fills identically
+        const heroDist = data.scale[0] * 3.2;
         // Slight upward shift: compensates for the bottom info bar occupying ~17vh
         const heroY    = data.scale[0] * 0.25;
         p = f.clone().add(new THREE.Vector3(0, heroY, heroDist));
@@ -95,11 +94,11 @@ function InteractiveRig({ selectedObject, isExpanded }) {
         
         let activeOffset;
         if (isExpanded) {
-          const optimalDist = Math.max(8, data.scale[0] * 2.2);
+          const optimalDist = data.scale[0] * 2.4;
           activeOffset = new THREE.Vector3(0, 0, optimalDist);
         } else {
-          // Hero view: lock to the same physics-computed distance
-          const heroDist = Math.max(10, data.scale[0] * 3.2);
+          // Hero view: lock to the strictly proportional cinematic distance
+          const heroDist = data.scale[0] * 3.2;
           const heroY    = data.scale[0] * 0.25;
           activeOffset = new THREE.Vector3(0, heroY, heroDist);
         }

@@ -1151,6 +1151,7 @@ function MiniSolarSystem({ selectedObject, accentColor, glowColor, onSelectObjec
     <div className="mini-solar-system" style={{
       display: 'flex', alignItems: 'center', marginBottom: '20px',
       position: 'relative', justifyContent: 'space-evenly', padding: '0 8px',
+      pointerEvents: 'auto'
     }}>
       {/* Connecting orbit line */}
       <div className="nav-orbit-line" />
@@ -1348,7 +1349,7 @@ export default function UIOverlay({ selectedObject, onSelectObject, onClose, isE
                   paddingBottom: '16px',
                   paddingTop: '60px',
                   background: 'linear-gradient(to top, rgba(0,4,14,0.95) 0%, rgba(0,4,14,0.4) 60%, transparent 100%)',
-                  pointerEvents: 'auto',
+                  pointerEvents: 'none',
                   overflowX: 'hidden',
                   fontFamily: 'var(--font-main, sans-serif)',
                   boxSizing: 'border-box',
@@ -1400,7 +1401,8 @@ export default function UIOverlay({ selectedObject, onSelectObject, onClose, isE
                     fontSize: '0.6rem', textTransform: 'uppercase', letterSpacing: '5px',
                     cursor: 'pointer', transition: 'all 0.3s ease',
                     padding: '8px 20px', fontWeight: 600,
-                    borderBottom: `1px solid rgba(255,255,255,0.2)`
+                    borderBottom: `1px solid rgba(255,255,255,0.2)`,
+                    pointerEvents: 'auto'
                   }}
                   onMouseOver={(e) => { e.currentTarget.style.borderColor = '#fff'; }}
                   onMouseOut={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.2)'; }}
